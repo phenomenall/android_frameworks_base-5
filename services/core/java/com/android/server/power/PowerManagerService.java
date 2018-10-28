@@ -251,7 +251,6 @@ public final class PowerManagerService extends SystemService
     private int mButtonBrightness;
     private int mButtonBrightnessSettingDefault;
     private boolean mButtonPressed = false;
-    private boolean mButtonOn = false;
 
     private final Object mLock = LockGuard.installNewLock(LockGuard.INDEX_POWER);
 
@@ -1351,9 +1350,7 @@ public final class PowerManagerService extends SystemService
             } else {
                 if (eventTime > mLastUserActivityTime) {
                     mButtonPressed = event == PowerManager.USER_ACTIVITY_EVENT_BUTTON;
-                    if ((mButtonBacklightOnTouchOnly && mButtonPressed)
-                            || eventTime == mLastWakeTime) {
-                        mButtonPressed = true;
+                    if (mButtonBacklightOnTouchOnly && mButtonPressed) {
                         mLastButtonActivityTime = eventTime;
                     }
                     mLastUserActivityTime = eventTime;
@@ -2031,21 +2028,14 @@ public final class PowerManagerService extends SystemService
                             if (mButtonTimeout != 0
                                     && now > mLastButtonActivityTime + mButtonTimeout) {
                                 mButtonsLight.setBrightness(0);
-                                mButtonOn = false;
                             } else {
                                 if ((!mButtonBacklightOnTouchOnly || mButtonPressed) &&
                                         !mProximityPositive) {
                                     mButtonsLight.setBrightness(buttonBrightness);
                                     mButtonPressed = false;
                                     if (buttonBrightness != 0 && mButtonTimeout != 0) {
-                                        mButtonOn = true;
-                                        if (now + mButtonTimeout < nextTimeout) {
-                                            nextTimeout = now + mButtonTimeout;
-                                        }
+                                        nextTimeout = now + mButtonTimeout;
                                     }
-                                } else if (mButtonBacklightOnTouchOnly && mButtonOn &&
-                                        mLastButtonActivityTime + mButtonTimeout < nextTimeout) {
-                                    nextTimeout = mLastButtonActivityTime + mButtonTimeout;
                                 }
                             }
                         }
@@ -2055,7 +2045,6 @@ public final class PowerManagerService extends SystemService
                             mUserActivitySummary = USER_ACTIVITY_SCREEN_DIM;
                             if (mWakefulness == WAKEFULNESS_AWAKE) {
                                 mButtonsLight.setBrightness(0);
-                                mButtonOn = false;
                             }
                         }
                     }
